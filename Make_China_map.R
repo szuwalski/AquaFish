@@ -22,7 +22,7 @@ data<-list(list())
 AquaFish<-list(list())
 for(x in 1:length(Years))
 {
-  data[[x]]   <-read_excel('mariculture_fish_province.xlsx',sheet=x)
+  data[[x]]   <-read_excel('Data/mariculture_fish_province.xlsx',sheet=x)
   data[[x]]   <-cbind(data[[x]],Year=rep(Years[x],nrow(data[[x]])))
   AquaFish[[x]]<-data[[x]][,match(c("Province","all fish","Year"),names(data[[x]]))]
 }
@@ -73,7 +73,7 @@ FlatFishFish$Year<-gsub(",","",FlatFishFish$Year)
 
 
 #==pull China shape files
-china_map1 <- readShapePoly("C:/Users/Cody/Desktop/ChinaMap/CHN_adm_shp/CHN_adm1.shp")
+china_map1 <- readShapePoly("CHN_adm_shp/CHN_adm1.shp")
 china_map2 <- china_map1@data
 china_map3 <- fortify(china_map1) ## fortify() is a function in the package of ggplot2, we will talk about it later
 china_map2$NAME <- iconv(china_map2$NAME, from = 'GBK')
@@ -158,6 +158,37 @@ for(y in 1:length(CoastalID))
 }
 
 plot(china_map1, col=inCols,xlim=c(108,123),ylim=c(14,42))
+
+#==pie charts for aquaculture
+# province,algae,other,total,fish,crustacean,shrimp,crab,shellfish
+all_area_ind<-c(1,2,11,19,20,21,22,27,31)
+plot_aqua<-aqua_area_by_province[aqua_area_by_province$Year==2016,all_area_ind]
+plot_aqua<-plot_aqua[-4,] # get rid of shanghai
+in_radius<-sqrt(plot_aqua$`total area`/3.141596)
+
+plot_aqua$Province[3]<-"Liaoning"
+plot_aqua$Province[4]<-"Jiangsu"
+plot_aqua$Province[6]<-"Fujian"
+
+Offset<-c( 0,0,  #Fujian
+           .5,.2,  #Guangdong
+           0,0,  #Guangxi
+           0,0,  #Hainan
+           -1,-1,  #Hebei
+           .35,.5,  #Jiangsu
+           0,0,	#Liaoning
+           0,0,	#Shandong
+           0,0,	#Tianjin
+           0,0)	#Zhejiang
+inOff<-matrix(Offset,ncol=2,byrow=T)
+
+for(z in 1:length(Offset))
+{     
+temp<-plot_aqua[which(plot_aqua$Province==as.character(Label[OrderedID[z]])),]
+floating.pie(xpos=LabelX[1],ypos=LabelY[1],radius=1,x=plot_aqua[z,])
+
+}
+
 
 Offset<-c( 0,0,  #Fujian
            .5,.2,  #Guangdong
