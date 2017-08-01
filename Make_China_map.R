@@ -165,28 +165,31 @@ all_area_ind<-c(1,2,11,19,20,21,22,27,31)
 plot_aqua<-aqua_area_by_province[aqua_area_by_province$Year==2016,all_area_ind]
 plot_aqua<-plot_aqua[-4,] # get rid of shanghai
 in_radius<-sqrt(plot_aqua$`total area`/3.141596)
+in_radius<-in_radius/400
 
 plot_aqua$Province[3]<-"Liaoning"
 plot_aqua$Province[4]<-"Jiangsu"
 plot_aqua$Province[6]<-"Fujian"
 
-Offset<-c( 0,0,  #Fujian
-           .5,.2,  #Guangdong
-           0,0,  #Guangxi
-           0,0,  #Hainan
-           -1,-1,  #Hebei
-           .35,.5,  #Jiangsu
-           0,0,	#Liaoning
-           0,0,	#Shandong
-           0,0,	#Tianjin
-           0,0)	#Zhejiang
+plot_aqua[is.na(plot_aqua)]<-0
+
+Offset<-c( 1.4,-1.8,  #Fujian
+           .7,-2.2,  #Guangdong
+           -1.6,-2.7,  #Guangxi
+           0,-1.5,  #Hainan
+           3.5,-.7,  #Hebei
+           2.3,.2,  #Jiangsu
+           1.55,-3,	#Liaoning
+           4,-.750,	#Shandong
+           .6,-.4,	#Tianjin
+           2.7,-.40)	#Zhejiang
 inOff<-matrix(Offset,ncol=2,byrow=T)
 
-for(z in 1:length(Offset))
+for(z in 1:nrow(inOff))
 {     
-temp<-plot_aqua[which(plot_aqua$Province==as.character(Label[OrderedID[z]])),]
-floating.pie(xpos=LabelX[1],ypos=LabelY[1],radius=1,x=plot_aqua[z,])
-
+temp<-plot_aqua[which(plot_aqua$Province==as.character(Label[z])),]
+floating.pie(xpos=LabelX[z]+inOff[z,1],ypos=LabelY[z]+inOff[z,2],
+             radius=in_radius[which(plot_aqua$Province==as.character(Label[z]))],x=as.numeric(temp[c(2,3,5:ncol(temp))]))
 }
 
 

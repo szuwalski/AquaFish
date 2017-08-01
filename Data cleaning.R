@@ -267,7 +267,7 @@ t5<-ChangeName(stock_enhance_by_province[,TakeFunc(input=stock_enhance_by_provin
 Biggie<-join(t1,t2,by=c('Province','Year'))
 Biggie<-join(Biggie,t3,by=c('Province','Year'))
 Biggie<-join(Biggie,t4,by=c('Province','Year'))
-Biggie<-join(Biggie,t4,by=c('Province','Year'))
+Biggie<-join(Biggie,t5,by=c('Province','Year'))
 for(x in 1:length(colnames(Biggie)))
   colnames(Biggie)[x]<-gsub(" ","_",colnames(Biggie)[x]) 
 
@@ -504,36 +504,16 @@ text(Biggie$Province,x=invar,y=Biggie$all_fish_catch,cex=.5,col=as.numeric(Biggi
 layout(matrix(c(1,1,1,2),nrow=1))
 par(mfrow=c(1,1),mar=c(.1,.1,.1,.1),oma=c(4,6,1,4))
 
-Ricker<-function(x,inY,inX)
-{
-  alpha		<-x[1]
-  beta		<-x[2]
-  sigma		<-abs(x[3])
-  Pred		<-inX*exp(alpha-beta*inX)
-  loglike	<-log(1/(sqrt(2*3.141598*sigma^2))) - ((log(Pred)-log(inY))^2)/(2*sigma^2) 
-  return(sum(-1*loglike,na.rm=TRUE))
-}
 
-BevHolt<-function(x,inY,inX)
-{
-  #x<-x1
-  alpha		<-abs(x[1])
-  beta		<-abs(x[2])
-  sigma		<-abs(x[3])
-  Pred		<-alpha*inX/(1+(inX/beta))
-  loglike	<-log(1/(sqrt(2*3.141598*sigma^2))) - ((log(Pred)-log(inY))^2)/(2*sigma^2) 
-  SSQ<-(((Pred)-(inY))^2)
-  return(sum(SSQ,na.rm=T))
-}
 
-Quadratic<-function(x,inY,inX)
-{
-  alpha		<-abs(x[1])
-  beta		<-abs(x[2])
-  Pred		<- -1*alpha*inX^2 + inX*beta
-  SSQ<-(((Pred)-(inY))^2)
-  return(sum(SSQ,na.rm=T))
-}
+#============================================
+# plot different types of catch
+#============================================
+par(mfrow=c(2,2),mar=c(.1,.1,.1,.1),oma=c(4,4,1,4))
+plot(Biggie$all_fish_catch~Biggie$Kilowatts)
+plot(Biggie$all_shellfish_catch~Biggie$Kilowatts)
+plot(Biggie$all_crustaceans_catch~Biggie$Kilowatts)
+plot(Biggie$all_algae_catch~Biggie$Kilowatts)
 
 scaleEFf<-100000
 library(RColorBrewer)
@@ -544,105 +524,16 @@ for(x in 1:length(inCol))
 
 pdf("Plots/province_production_curves.pdf",height=4,width=6.5)
 par(mar=c(3.5,5,1,1))
-invar<-Biggie$all_fish_catch/Biggie$Fishing_diqu
 invar<-Biggie$all_fish_catch/1000000
 scaledKilo<-(Biggie$Kilowatts)/scaleEFf
 plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col=inCol,pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
 axis(side=1,las=1)
 axis(side=2,las=1)
-modtype<-"quad"
 
-for(x in 1:length(CoastalProv))
-{
-  tempDat<-Biggie[Biggie$Province==CoastalProv[x],]
-  tempDat$Kilowatts<-tempDat$Kilowatts/scaleEFf
-  invar<-tempDat$all_fish_catch/tempDat$Fishing_diqu
-  invar<-tempDat$all_fish_catch/1000000
-  dummy<-seq(0,max(Biggie$Kilowatts/scaleEFf,na.rm=T),max(Biggie$Kilowatts/scaleEFf,na.rm=T)/20000)
-  dummy<-seq(0,24+max(Biggie$Kilowatts/scaleEFf,na.rm=T),max(Biggie$Kilowatts/scaleEFf,na.rm=T)/20000)
-  
-  #==quadratic model
-  if(modtype=="quad")
-  { 
-  #mod<-lm(invar~-1 + tempDat$Kilowatts + I(tempDat$Kilowatts^2))
-  #preds<- mod$coeff[1]*dummy + mod$coeff[2]*I(dummy^2)
-  #preds[preds<0]<-NA
-  #lines(preds~dummy,col=tempCol[x],lwd=2)
-  #summary(mod)
-  
-  x1		<-c(1,1)
-  outs		<-optim(x1,Quadratic,inY=invar,inX=tempDat$Kilowatts)
-  x1		<-outs$par
-  outs		<-optim(x1,Quadratic,inY=invar,inX=tempDat$Kilowatts)
-  x1		<-outs$par
-  outs		<-optim(x1,Quadratic,inY=invar,inX=tempDat$Kilowatts)
-  alpha   <-abs(outs$par[1])
-  beta    <-abs(outs$par[2])
-  preds   <- -1*alpha*dummy^2 + dummy*beta 
-  preds[preds<0]<-NA
-  lines(preds~dummy,col=tempCol[x],lwd=2)
-  }
-
-  #==Michalis menten
-  if(modtype=="MM")
-  {  
-    #plot(invar~tempDat$Kilowatts,col=tempCol[x],ylim=c(0,3))
-    #Stx		<-srStarts(invar~tempDat$Kilowatts,type="BevertonHolt",param=2)
-    #x1		<-c(Stx$a,Stx$p,1)
-    x1		<-c(.25,200,1)
-    outs		<-optim(x1,BevHolt,inY=invar,inX=tempDat$Kilowatts)
-    x1		<-outs$par
-    outs		<-optim(x1,BevHolt,inY=invar,inX=tempDat$Kilowatts)
-    x1		<-outs$par
-    outs		<-optim(x1,BevHolt,inY=invar,inX=tempDat$Kilowatts)
-    alpha   <-outs$par[1]
-    beta    <-outs$par[2]
-    #alpha<-.25
-    #beta<-200
-    preds   <-(alpha*dummy)/(1+(dummy/beta)) 
-    preds[preds<0]<-NA
-    lines(preds~dummy,col=tempCol[x],lwd=2)
-  }  
-  
-  #==Ricker
-  if(modtype=="Rick")
-  {
-    Stx1<-srStarts(invar~tempDat$Kilowatts,type="Ricker",param=2)
-    x1		<-c(Stx1$a,Stx1$b,1)
-    outs1		<-optim(x1,Ricker,inY=invar,inX=tempDat$Kilowatts)
-    x1		<-outs1$par
-    outs1		<-optim(x1,Ricker,inY=invar,inX=tempDat$Kilowatts)
-    x1		<-outs1$par
-    outs1		<-optim(x1,Ricker,inY=invar,inX=tempDat$Kilowatts)
-
-    alpha<-outs1$par[1]
-    beta<-outs1$par[2]
-    preds<- dummy*exp(alpha-beta*dummy)
-    preds[preds<0]<-NA
-    lines(preds~dummy,col=tempCol[x],lwd=2)
-  }
-}
-#plot.new()
+PlotCurves(x=scaledKilo,y=invar,col=inCol,group=Biggie$Province,modtype="quad",dummymax=42)
+PlotCurves(x=scaledKilo,y=invar,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=42,inlty=2)
 legend("topleft",CoastalProv_name,col=tempCol,pch=16,bty='n',cex=.7)
 
-invar<-Biggie$all_fish_catch/Biggie$Fishing_diqu
-invar<-Biggie$all_fish_catch/1000000
-scaledKilo<-(Biggie$Kilowatts)/scaleEFf
-x1		<-c(1,1)
-x1		<-c(10,100000)
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-alpha   <-abs(outs$par[1])
-beta    <-abs(outs$par[2])
-preds   <- -1*alpha*(dummy^2) + dummy*beta 
-preds[preds<0]<-NA
-lines(preds~dummy,col=1,lwd=2,lty=2)
-
-axis(side=1,las=1)
-axis(side=2,las=1)
 mtext(side=2,"Marine fisheries catch ",line=3.2,cex=0.85)
 mtext(side=2," (1,000,000 t)",line=2.3,cex=0.85)
 mtext(side=1,"Fleet power (100,000 kw)",line=2,cex=0.85)
@@ -651,22 +542,10 @@ dev.off()
 
 pdf("Plots/total_production_curve.pdf",height=4,width=6.5)
 par(mar=c(3.5,5,1,1))
-plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col="grey",pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
-invar<-Biggie$all_fish_catch/Biggie$Fishing_diqu
 invar<-Biggie$all_fish_catch/1000000
 scaledKilo<-(Biggie$Kilowatts)/scaleEFf
-x1		<-c(1,1)
-x1		<-c(10,100000)
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-alpha   <-abs(outs$par[1])
-beta    <-abs(outs$par[2])
-preds   <- -1*alpha*(dummy^2) + dummy*beta 
-preds[preds<0]<-NA
-lines(preds~dummy,col=1,lwd=2,lty=2)
+plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col="grey",pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
+PlotCurves(x=scaledKilo,y=invar,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=42,inlty=2)
 axis(side=1,las=1)
 axis(side=2,las=1)
 mtext(side=2,"Marine fisheries catch ",line=3.2,cex=0.85)
@@ -676,28 +555,89 @@ dev.off()
 
 pdf("Plots/total_production_curve_province.pdf",height=4,width=6.5)
 par(mar=c(3.5,5,1,1))
-plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col=inCol,pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
-invar<-Biggie$all_fish_catch/Biggie$Fishing_diqu
 invar<-Biggie$all_fish_catch/1000000
 scaledKilo<-(Biggie$Kilowatts)/scaleEFf
-x1		<-c(1,1)
-x1		<-c(10,100000)
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-x1		<-outs$par
-outs		<-optim(x1,Quadratic,inY=invar,inX=scaledKilo)
-alpha   <-abs(outs$par[1])
-beta    <-abs(outs$par[2])
-preds   <- -1*alpha*(dummy^2) + dummy*beta 
-preds[preds<0]<-NA
-lines(preds~dummy,col=1,lwd=2,lty=2)
+plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col=inCol,pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
+PlotCurves(x=scaledKilo,y=invar,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=42,inlty=2)
 axis(side=1,las=1)
 axis(side=2,las=1)
 mtext(side=2,"Marine fisheries catch ",line=3.2,cex=0.85)
 mtext(side=2," (1,000,000 t)",line=2.3,cex=0.85)
 mtext(side=1,"Fleet power (100,000 kw)",line=2,cex=0.85)
 dev.off()
+
+
+#===================================================
+# Plot aquaculture yields vs. aquaculture area
+#==================================================
+Aqua_dat<-Biggie[,c(1,8,AquaInds)]
+aqua_types<-c("algae","all_fish","crustacean","shellfish")
+
+tempCol<-brewer.pal(10,"Set3")
+inCol<-rep(NA,length(Aqua_dat$Province))
+for(x in 1:length(inCol))
+     inCol[!is.na(match(Aqua_dat$Province,CoastalProv[x]))]<-tempCol[x]
+
+plot(Aqua_dat[,7]~Aqua_dat[,3],las=1,col="grey",pch=16,ylim=c(0,800000),xlim=c(0,60000))
+legend("topleft",bty='n',"Algae")
+points(Aqua_dat[,8]~Aqua_dat[,4],col="grey",pch=16)
+legend("topleft",bty='n',"Fish")
+points(Aqua_dat[,10]~Aqua_dat[,6],las=1,col="grey",pch=16)
+legend("topleft",bty='n',"Crustaceans")
+points(Aqua_dat[,9]~Aqua_dat[,5],col="grey",pch=16)
+points("topleft",bty='n',"Shellfish")
+
+colnames(Aqua_dat)
+par(mfrow=c(2,2),mar=c(.1,.1,.1,.1),oma=c(4,4,1,4))
+plot(Aqua_dat[,7]~Aqua_dat[,3],ylim=c(0,800000),xlim=c(0,60000),xaxt='n',las=1,col="grey",pch=16,)
+legend("topleft",bty='n',"Algae")
+plot(Aqua_dat[,10]~Aqua_dat[,6],ylim=c(0,800000),xlim=c(0,130000),yaxt='n',xaxt='n',las=1,col="grey",pch=16,)
+legend("topleft",bty='n',"Crustaceans")
+plot(Aqua_dat[,8]~Aqua_dat[,4],ylim=c(0,300000),xlim=c(0,60000),col="grey",pch=16,las=1)
+legend("topleft",bty='n',"Fish")
+plot(Aqua_dat[,9]~Aqua_dat[,5],ylim=c(0,300000),xlim=c(0,130000),yaxt='n',col="grey",pch=16,)
+legend("topleft",bty='n',"Shellfish")
+
+par(mfrow=c(2,2),mar=c(.1,.1,.1,.1),oma=c(4,4,1,4))
+plot(Aqua_dat[,7]~Aqua_dat[,3],ylim=c(0,800000),xlim=c(0,60000),xaxt='n',las=1,col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,7],x=Aqua_dat[,3],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,7],x=Aqua_dat[,3],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Algae")
+
+plot(Aqua_dat[,10]~Aqua_dat[,6],ylim=c(0,800000),xlim=c(0,130000),yaxt='n',xaxt='n',las=1,col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,10],x=Aqua_dat[,6],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,10],x=Aqua_dat[,6],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Crustaceans")
+
+plot(Aqua_dat[,8]~Aqua_dat[,4],ylim=c(0,300000),xlim=c(0,60000),col=inCol,pch=16,las=1)
+PlotCurves(y=Aqua_dat[,8],x=Aqua_dat[,4],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,8],x=Aqua_dat[,4],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Fish")
+
+plot(Aqua_dat[,9]~Aqua_dat[,5],ylim=c(0,300000),xlim=c(0,130000),yaxt='n',col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,9],x=Aqua_dat[,5],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,9],x=Aqua_dat[,5],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Shellfish")
+
+
+
+pdf("Plots/total_aqua_production_curve.pdf",height=4,width=6.5)
+par(mar=c(3.5,5,1,1))
+plot(invar~scaledKilo,ylim=c(0,max(invar,na.rm=T)),col="grey",pch=16,las=1,xlim=c(0,45),yaxt='n',xaxt='n',bty='n',ylab='',xlab='')
+invar<-Biggie$all_fish_catch/Biggie$Fishing_diqu
+invar<-Biggie$all_fish_catch/1000000
+scaledKilo<-(Biggie$Kilowatts)/scaleEFf
+
+axis(side=1,las=1)
+axis(side=2,las=1)
+mtext(side=2,"Marine fisheries catch ",line=3.2,cex=0.85)
+mtext(side=2," (1,000,000 t)",line=2.3,cex=0.85)
+mtext(side=1,"Fleet power (100,000 kw)",line=2,cex=0.85)
+dev.off()
+
+
+
+
 
 pdf("Plots/Modelfits.pdf",height=4,width=8)
 for(x in 1:length(CoastalProv))
@@ -796,7 +736,98 @@ Small_Fish<-c("Guangxi","Jiangsu Province","Hebei","Tianjin")
 
 
 
+#=====================================
 # time series clustering
+#=====================================
+
+#==THIS ALL SEEMS PRETTY RIDICULOUS, BUT I DON'T FEEL LIKE FIXING IT
+#==take colnames that have 'catch' or 'aqua' in them
+#==remove those that have 'all' in them, except small yellow croaker
+catchInd<-grep("catch",colnames(Biggie))
+temp<-Biggie[,catchInd]
+Biggie$other_crustaceans_catch<-temp[,1]-apply(temp[,2:6],1,sum,na.rm=T)
+Biggie$other_fish_catch<-temp[,7]-apply(temp[,8:24],1,sum,na.rm=T)
+
+aquaInd<-grep("aqua",colnames(Biggie))
+temp<-Biggie[,aquaInd]
+Biggie$other_algae_aqua<-temp[,1]-apply(temp[,2:3],1,sum,na.rm=T)
+Biggie$other_crustacean_aqua<-temp[,4]-temp[,5]
+Biggie$other_shellfish_aqua<-temp[,8]-apply(temp[,9:13],1,sum,na.rm=T)
+
+allInd<-grep("all",colnames(Biggie))
+allInd<-allInd[-c(3,11,17)]
+colnames(Biggie)[allInd]
+
+temp<-Biggie[,-c(allInd)]
+catchInd<-grep("catch",colnames(temp))
+aquaInd<-grep("aqua",colnames(temp))
+tsDat<-temp[,c(1,7,unlist(catchInd),unlist(aquaInd))]
+
+library(reshape)
+asdf<-melt(tsDat,id=c('Province','Year'))
+meh<-cast(asdf,variable~Year~Province,fun.aggregate=sum,na.rm=T)
+hrm<-meh[,,c(3,5,6,8,9,16,19,22,27,33)]
+useDat<-abind(hrm,apply(hrm,c(1,2),sum,na.rm=T))
+dimnames(useDat)[[3]][11]<-"China"
+
+#==make colors
+colrange       <-seq(-3,3,length.out=1000)
+cols 		<-colorRampPalette(brewer.pal(11,"Spectral"))(length(colrange))
+
+library("TSclust")
+pdf("Plots/clusters.pdf")
+scale_dat<-useDat
+
+for(x in 1:dim(useDat)[3])
+{
+ temp<-useDat[,,x]
+ 
+ for(y in 1:nrow(temp)) 
+ {
+  for(z in 2:(ncol(temp)-1))
+  {
+   if(temp[y,z]==0)
+    temp[y,z]<-(temp[y,z-1]+temp[y,z+1])/2
+  }
+  scale_dat[y,,x]<-scale(temp[y,])
+  if(any(scale_dat[y,,x]=="NaN"))
+       scale_dat[y,,x]<-0
+ }
+  
+ dissim<-dist(scale_dat[,,x],method="euclidean")
+ 
+ #==how are these found
+ clusts<-hclust(dissim)
+
+ mat<-matrix(c(2,2,2,1,1,
+               2,2,2,1,1,
+               2,2,2,1,1,
+               2,2,2,1,1),ncol=5,byrow=T)
+ layout(mat)
+ par(mar=c(.1,.1,.1,.1),oma=c(4,4,1,12))
+ plot(-100,xlim=c(1983,2016),ylim=c(-3,4*nrow(scale_dat[,,x])+3),axes=F,ylab='',
+      main=dimnames(useDat)[[3]][x])
+ axis(side=1)
+ markers<-seq(0,4*nrow(scale_dat[,,x])+3,4)
+
+ for(q in 1:length(clusts$order))
+ {
+  incols<-scale_dat[clusts$order[q],,x]  
+  for(w in 1:length(scale_dat[clusts$order[q],,x]))      
+   incols[w]<-cols[which(abs(colrange-scale_dat[clusts$order[q],w,x])==min(abs(colrange-scale_dat[clusts$order[q],w,x])))]
+  
+  points(scale_dat[clusts$order[q],,x]+markers[q]~as.numeric(colnames(scale_dat)),pch=16,col=incols,cex=2)
+  lines(scale_dat[clusts$order[q],,x]+markers[q]~as.numeric(colnames(scale_dat)))
+  par(xpd=NA)
+  text(x=2016,y=markers[q],rownames(scale_dat[,,x])[clusts$order[q]],las=1,pos=4)
+ }
+  plot(clusts,yaxt='n')
+}
+dev.off()
+
+
+
+
 # Benford's law
 # Trim data set to include only reasonable CPUE
 # make columns for total CPUE, catch of 'other' fish
