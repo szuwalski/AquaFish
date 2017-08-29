@@ -120,7 +120,7 @@ for(i in 1:length(CoastalID))
 
 
 #dev.new(width=8,height=5)
-pdf("ChinaFishProduction.pdf",height=6,width=8)
+pdf("Plots/ChinaFishProduction.pdf",height=6,width=8)
 layout(matrix(c(1,2,2,3),ncol=4))
 xIn<-c(seq(1,length(CoastalID)),rep(rep(length(CoastalID)+1,length(CoastalID)),2),seq(length(CoastalID)+2,length(CoastalID)+1+length(CoastalID)))
 layout(matrix(xIn,ncol=4))
@@ -184,14 +184,26 @@ Offset<-c( 1.4,-1.8,  #Fujian
            .6,-.4,	#Tianjin
            2.7,-.40)	#Zhejiang
 inOff<-matrix(Offset,ncol=2,byrow=T)
+aquacols 	<-colorRampPalette(brewer.pal(7,"Set3"))(7)
 
 for(z in 1:nrow(inOff))
 {     
 temp<-plot_aqua[which(plot_aqua$Province==as.character(Label[z])),]
 floating.pie(xpos=LabelX[z]+inOff[z,1],ypos=LabelY[z]+inOff[z,2],
-             radius=in_radius[which(plot_aqua$Province==as.character(Label[z]))],x=as.numeric(temp[c(2,3,5:ncol(temp))]))
+             radius=in_radius[which(plot_aqua$Province==as.character(Label[z]))],x=as.numeric(temp[c(2,3,5:ncol(temp))]),col=aquacols)
 }
 
+inNames<-c("Algae","Other","Fish","Crustaceans","Shrimp","Crab","Shellfish")
+legend(x=112,y=34.1,legend=c("Aquaculture",inNames),col=c(NA,aquacols),pch=15,box.col='lightgrey',bg='lightgrey')
+
+midLeg<-123
+latLeg<-15
+symbols(x=midLeg,y=latLeg,circles=in_radius[3],add=TRUE,inches=FALSE)
+symbols(x=midLeg,y=latLeg-.7,circles=in_radius[2],add=TRUE,inches=FALSE)
+text(x=midLeg,y=latLeg-.7,1.2,cex=.8)
+text(x=midLeg,y=latLeg,9.3,cex=.8)
+text(x=midLeg,y=latLeg-1.7,"10000 hectares")
+text(x=midLeg,y=latLeg+1.7,"Aquaculture area")
 
 Offset<-c( 0,0,  #Fujian
            .5,.2,  #Guangdong
@@ -207,8 +219,8 @@ inOff<-matrix(Offset,ncol=2,byrow=T)
 
 text(x=LabelX+inOff[,1],y=LabelY+inOff[,2],Label,cex=1)
 par(xpd=NA)
-text(x=116,y=16,"Marine fish production (t)")
-color.legend2(109,13,123,14.5,rect.col=cols,
+text(x=112.6,y=16,"Marine seafood production (t)")
+color.legend2(106,13,119.4,14.5,rect.col=cols,
               #legend=round(exp(colrange[seq(1,length(colrange),length.out=6)])))
               legend=c(10,100,1000,15000,150000,2000000))
 
@@ -239,7 +251,7 @@ for(y in 1:length(CoastalID))
     axis(side=1)
 }
 
-mtext(outer=T,adj=.1,"Aquaculture",side=3)
-mtext(outer=T,adj=.9,"Fisheries",side=3)
-mtext(outer=T,adj=.5,"China's coastal provinces",side=3,cex=1.1)
+mtext(outer=T,adj=.1,"Culture",side=3)
+mtext(outer=T,adj=.9,"Capture",side=3)
+mtext(outer=T,adj=.5,"China's seafood production by province",side=3,cex=1.1)
 dev.off()

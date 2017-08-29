@@ -14,6 +14,7 @@ library(dplyr)
 library(lmtest)
 library(xts)
 library(FSA)
+library(ggplot2)
 source("Functions.R")
 
 filelist<-list.files("Data")
@@ -212,10 +213,14 @@ TotalEffort<- fish_effort_by_province%>%
 log10(TotalEffort$TotTon)
 colnames(fish_effort_by_province)
 
+#write.csv(TotalEffort,"TotalEffort.csv")
 GlobalEffort<-read.csv("Data_aux/Global fleet size.csv")
 colnames(GlobalEffort)
 print(qplot(x=Year,y=log10(Value),color=Country,data=GlobalEffort[GlobalEffort$UNIT=="NU",],geom='line'))
 print(qplot(x=Year,y=log10(Value),color=Country,data=GlobalEffort[GlobalEffort$UNIT=="GT",],geom='line'))
+
+print(qplot(x=Year,y=(Value),color=Country,data=GlobalEffort[GlobalEffort$UNIT=="NU",],geom='line',ylab="numbers"))
+print(qplot(x=Year,y=(Value),color=Country,data=GlobalEffort[GlobalEffort$UNIT=="GT",],geom='line',ylab="tonnage"))
 
 #===================================
 #==PULL STOCK ENHANCEMENT DATA====
@@ -509,18 +514,87 @@ par(mfrow=c(1,1),mar=c(.1,.1,.1,.1),oma=c(4,6,1,4))
 #============================================
 # plot different types of catch
 #============================================
+scaleEFf<-100000
+library(RColorBrewer)
+tempCol<-brewer.pal(10,"Set3")
+inCol<-rep(NA,length(Biggie$Province))
+for(x in 1:length(inCol))
+     inCol[!is.na(match(Biggie$Province,CoastalProv[x]))]<-tempCol[x]
+
 par(mfrow=c(2,2),mar=c(.1,.1,.1,.1),oma=c(4,4,1,4))
 plot(Biggie$all_fish_catch~Biggie$Kilowatts)
 plot(Biggie$all_shellfish_catch~Biggie$Kilowatts)
 plot(Biggie$all_crustaceans_catch~Biggie$Kilowatts)
 plot(Biggie$all_algae_catch~Biggie$Kilowatts)
 
-scaleEFf<-100000
-library(RColorBrewer)
+#=====================================================
+#
+# FIGURE 3 OF THE PAPER???
+# need to figure out starting values for quadratic
+#======================================================
+mat<-matrix(c(1,2,5,6,7,
+              3,4,5,8,9),ncol=5,byrow=T)
+layout(mat)
+par(mar=c(.1,.1,.1,.1),oma=c(4,4,1,4))
+
+inEff<-Biggie$Kilowatts/1000
+cat_mod<-1000
+dummymax<-4000
+plot(Biggie$all_fish_catch/cat_mod~inEff,xaxt='n',las=1,col=inCol,pch=16,)
+PlotCurves(y=Biggie$all_fish_catch/cat_mod,x=inEff,col=inCol,group=Biggie$Province,modtype="quad",dummymax=dummymax,inlty=2)
+PlotCurves(y=Biggie$all_fish_catch/cat_mod,x=inEff,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=dummymax,inlty=2)
+legend("topleft",bty='n',"Fish")
+
+plot(Biggie$all_shellfish_catch/cat_mod~inEff,xaxt='n',las=1,col=inCol,pch=16,yaxt='n')
+axis(side=4,las=1)
+PlotCurves(y=Biggie$all_shellfish_catch/cat_mod,x=inEff,col=inCol,group=Biggie$Province,modtype="quad",dummymax=dummymax,inlty=2)
+PlotCurves(y=Biggie$all_shellfish_catch/cat_mod,x=inEff,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=dummymax,inlty=2)
+legend("topleft",bty='n',"Shellfish")
+
+plot(Biggie$all_crustaceans_catch/cat_mod~inEff,las=1,col=inCol,pch=16,)
+PlotCurves(y=Biggie$all_crustaceans_catch/cat_mod,x=inEff,col=inCol,group=Biggie$Province,modtype="quad",dummymax=dummymax,inlty=2)
+PlotCurves(y=Biggie$all_crustaceans_catch/cat_mod,x=inEff,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=dummymax,inlty=2)
+legend("topleft",bty='n',"Crustaceans")
+
+plot(Biggie$all_algae_catch/cat_mod~inEff,las=1,col=inCol,pch=16,yaxt='n')
+axis(side=4,las=1)
+PlotCurves(y=Biggie$all_algae_catch/cat_mod,x=inEff,col=inCol,group=Biggie$Province,modtype="quad",dummymax=dummymax,inlty=2)
+PlotCurves(y=Biggie$all_algae_catch/cat_mod,x=inEff,col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=dummymax,inlty=2)
+legend("topleft",bty='n',"Algae")
+
+legend("right",CoastalProv_name,col=tempCol,pch=16,bty='n',cex=.7)
+Aqua_dat<-Biggie[,c(1,8,AquaInds)]
+aqua_types<-c("algae","all_fish","crustacean","shellfish")
+
 tempCol<-brewer.pal(10,"Set3")
-inCol<-rep(NA,length(Biggie$Province))
+inCol<-rep(NA,length(Aqua_dat$Province))
 for(x in 1:length(inCol))
-  inCol[!is.na(match(Biggie$Province,CoastalProv[x]))]<-tempCol[x]
+     inCol[!is.na(match(Aqua_dat$Province,CoastalProv[x]))]<-tempCol[x]
+plot.new()
+
+plot(Aqua_dat[,7]~Aqua_dat[,3],ylim=c(0,800000),xlim=c(0,60000),xaxt='n',las=1,col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,7],x=Aqua_dat[,3],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,7],x=Aqua_dat[,3],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Algae")
+
+plot(Aqua_dat[,10]~Aqua_dat[,6],ylim=c(0,800000),xlim=c(0,130000),yaxt='n',xaxt='n',las=1,col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,10],x=Aqua_dat[,6],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,10],x=Aqua_dat[,6],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Crustaceans")
+
+plot(Aqua_dat[,8]~Aqua_dat[,4],ylim=c(0,300000),xlim=c(0,60000),col=inCol,pch=16,las=1)
+PlotCurves(y=Aqua_dat[,8],x=Aqua_dat[,4],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,8],x=Aqua_dat[,4],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Fish")
+
+plot(Aqua_dat[,9]~Aqua_dat[,5],ylim=c(0,300000),xlim=c(0,130000),yaxt='n',col=inCol,pch=16,)
+PlotCurves(y=Aqua_dat[,9],x=Aqua_dat[,5],col=inCol,group=Aqua_dat[,1],modtype="quad",dummymax=130000,inlty=2)
+PlotCurves(y=Aqua_dat[,9],x=Aqua_dat[,5],col=1,group=rep(1,length(scaledKilo)),modtype="quad",dummymax=130000,inlty=2)
+legend("topleft",bty='n',"Shellfish")
+
+
+#==========================================================================
+
 
 pdf("Plots/province_production_curves.pdf",height=4,width=6.5)
 par(mar=c(3.5,5,1,1))
@@ -764,6 +838,7 @@ aquaInd<-grep("aqua",colnames(temp))
 tsDat<-temp[,c(1,7,unlist(catchInd),unlist(aquaInd))]
 
 library(reshape)
+library(abind)
 asdf<-melt(tsDat,id=c('Province','Year'))
 meh<-cast(asdf,variable~Year~Province,fun.aggregate=sum,na.rm=T)
 hrm<-meh[,,c(3,5,6,8,9,16,19,22,27,33)]
@@ -774,14 +849,20 @@ dimnames(useDat)[[3]][11]<-"China"
 colrange       <-seq(-3,3,length.out=1000)
 cols 		<-colorRampPalette(brewer.pal(11,"Spectral"))(length(colrange))
 
-library("TSclust")
-pdf("Plots/clusters.pdf")
+#=======================================
+# plot all coastal provinces for supplementary materials
+#=================================================
+#==split aquaculture and fisheries
+orig_col<-c(rep(1,25),rep('red',11))
+species_names<-read.csv("species_names.csv")
+
+pdf("Plots/clusters_plain.pdf",height=9,width=6)
 scale_dat<-useDat
 
 for(x in 1:dim(useDat)[3])
 {
  temp<-useDat[,,x]
- 
+ maxes<-(apply(temp,1,max,na.rm=T))/10000
  for(y in 1:nrow(temp)) 
  {
   for(z in 2:(ncol(temp)-1))
@@ -799,11 +880,11 @@ for(x in 1:dim(useDat)[3])
  #==how are these found
  clusts<-hclust(dissim)
 
- mat<-matrix(c(2,2,2,1,1,
-               2,2,2,1,1,
-               2,2,2,1,1,
-               2,2,2,1,1),ncol=5,byrow=T)
- layout(mat)
+ # mat<-matrix(c(2,2,2,1,1,
+ #               2,2,2,1,1,
+ #               2,2,2,1,1,
+ #               2,2,2,1,1),ncol=5,byrow=T)
+ # layout(mat)
  par(mar=c(.1,.1,.1,.1),oma=c(4,4,1,12))
  plot(-100,xlim=c(1983,2016),ylim=c(-3,4*nrow(scale_dat[,,x])+3),axes=F,ylab='',
       main=dimnames(useDat)[[3]][x])
@@ -819,12 +900,72 @@ for(x in 1:dim(useDat)[3])
   points(scale_dat[clusts$order[q],,x]+markers[q]~as.numeric(colnames(scale_dat)),pch=16,col=incols,cex=2)
   lines(scale_dat[clusts$order[q],,x]+markers[q]~as.numeric(colnames(scale_dat)))
   par(xpd=NA)
-  text(x=2016,y=markers[q],rownames(scale_dat[,,x])[clusts$order[q]],las=1,pos=4)
+  #text(x=2016,y=markers[q],rownames(scale_dat[,,x])[clusts$order[q]],las=1,pos=4)
+  text(x=2016,y=markers[q],paste(species_names[clusts$order[q],2]," (",signif(maxes[clusts$order[q]],2),")",sep=""),las=1,pos=4,col=orig_col[clusts$order[q]],cex=.7)
  }
-  plot(clusts,yaxt='n')
+  #plot(clusts,yaxt='n')
 }
 dev.off()
 
+#=======================================
+# plot only China totals for 
+#=================================================
+species_names<-read.csv("species_names.csv")
+scale_dat<-useDat[,,11]
+temp<-scale_dat
+for(y in 1:nrow(temp)) 
+{
+ for(z in 2:(ncol(temp)-1))
+ {
+  if(temp[y,z]==0)
+    temp[y,z]<-(temp[y,z-1]+temp[y,z+1])/2
+  }
+  scale_dat[y,]<-scale(temp[y,])
+}
+     
+
+
+#==clustering
+dissim<-dist(scale_dat,method="euclidean")
+clusts<-hclust(dissim)
+#plot(clusts)
+pdf("Plots/clusters_all_China.pdf",height=6,width=4)
+#==plotting     
+par(mfrow=c(1,1),mar=c(.1,.1,.1,.1),oma=c(3,1.5,0,8))
+maxes<-(apply(useDat[,,11],1,max,na.rm=T))/10000
+
+#barpos<-barplot(-maxes[clusts$order],axes=FALSE,horiz=TRUE) 
+
+plot(-100,xlim=c(1983,2016),ylim=c(0,4*nrow(scale_dat)+0),axes=F,ylab='',
+     main="")
+axis(side=1,cex.axis=.7)
+markers<-seq(0,4*nrow(scale_dat)+3,4)
+     
+for(q in 1:length(clusts$order))
+{
+ incols<-scale_dat[clusts$order[q],]  
+ for(w in 1:length(scale_dat[clusts$order[q],]))      
+   incols[w]<-cols[which(abs(colrange-scale_dat[clusts$order[q],w])==min(abs(colrange-scale_dat[clusts$order[q],w])))]
+          
+ points(scale_dat[clusts$order[q],]+markers[q]~as.numeric(colnames(scale_dat)),pch=16,col=incols,cex=1.5)
+ lines(scale_dat[clusts$order[q],]+markers[q]~as.numeric(colnames(scale_dat)))
+ par(xpd=NA)
+ text(x=2016,y=markers[q],paste(species_names[clusts$order[q],2]," (",signif(maxes[clusts$order[q]],2),")",sep=""),las=1,pos=4,col=orig_col[clusts$order[q]],cex=.7)
+ #text(x=1983,y=markers[q],signif(maxes[clusts$order[q]],2),las=1,col=orig_col[clusts$order[q]],pos=2,cex=.7)
+ }
+x1<-1981.5
+x2<-1981
+gon_col<-'darkgrey'
+polygon(x=c(x2,x2,x1,x1),y=c(142,134.5,134.5,142),border='NA',col=gon_col)
+mtext(side=2,adj=.965,"Decrease",line=.25,cex=.6)
+polygon(x=c(x2,x2,x1,x1),y=c(109.5,132.5,132.5,109.5),border='NA',col=gon_col)
+mtext(side=2,adj=.84,"Dome",line=.25,cex=.6)
+polygon(x=c(x2,x2,x1,x1),y=c(107.5,70.5,70.5,107.5),border='NA',col=gon_col)
+mtext(side=2,adj=.65,"Plateau",line=.25,cex=.6)
+polygon(x=c(x2,x2,x1,x1),y=c(-3,68.5,68.5,-3),border='NA',col=gon_col)
+mtext(side=2,adj=.27,"Increase",line=.25,cex=.6)
+mtext(side=1,"Year",cex=.8,line=2)
+dev.off()
 
 
 

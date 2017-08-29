@@ -10,7 +10,7 @@ PlotCurves<-function(x,y,col,group,modtype="quad",dummymax,inlty=1,inlwd=2)
          #==quadratic model
           if(modtype=="quad")
           { 
-               x1		<-c(1,1)
+               x1		<-c(2,max(invarY,na.rm=T)/2)
                outs		<-optim(x1,Quadratic,inY=invarY,inX=invarX)
                x1		<-outs$par
                outs		<-optim(x1,Quadratic,inY=invarY,inX=invarX)
@@ -133,6 +133,6 @@ color.legend2<-function (xl, yb, xr, yt, legend, rect.col, cex = 1, align = "lt"
       textadj <- c(1, 0.5)
     }
   }
-  text(textx, texty, labels = legend, adj = textadj, ...)
+  text(textx, texty, labels = legend, adj = textadj,cex=.9 ,...)
   par(xpd = FALSE, cex = oldcex)
 }
