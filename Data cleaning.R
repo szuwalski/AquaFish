@@ -289,7 +289,6 @@ for(x in 1:length(CoastalProv))
 
 #==multiply by 200 to get area of EEZ approximately
 Biggie$Fishing_diqu<-addCoast*200
-
 #======================================================
 # For each province, pairs plot for different variables
 #======================================================

@@ -55,7 +55,8 @@ for(i in 1:length(CoastalID))
 
 
 #dev.new(width=8,height=5)
-pdf("Plots/ChinaSeafoodProduction.pdf",height=5,width=8)
+#pdf("Plots/ChinaSeafoodProduction.pdf",height=5,width=8)
+pdf("Plots/ChinaSeafoodProduction.pdf",height=6,width=8)
 layout(matrix(c(1,2,2,3),ncol=4))
 xIn<-c(seq(1,length(CoastalID)),rep(rep(length(CoastalID)+1,length(CoastalID)),2),seq(length(CoastalID)+2,length(CoastalID)+1+length(CoastalID)))
 layout(matrix(xIn,ncol=4))
@@ -93,6 +94,7 @@ for(y in 1:length(CoastalID))
           axis(side=1,line=.25)
 }
 
+#plot(china_map1, col=inCols,xlim=c(115,117),ylim=c(16,42))
 plot(china_map1, col=inCols,xlim=c(108,123),ylim=c(14,42))
 
 #==pie charts for aquaculture
@@ -130,7 +132,9 @@ for(z in 1:nrow(inOff))
 }
 
 inNames<-c("Algae","Other","Fish","Crustaceans","Shrimp","Crab","Shellfish")
-legend(x=108,y=35.6,legend=c("Aquaculture",inNames),col=c(NA,aquacols),pch=15,box.col='lightgrey',bg='lightgrey')
+#legend(x=108,y=35.6,legend=c("Aquaculture",inNames),col=c(NA,aquacols),pch=15,box.col='lightgrey',bg='lightgrey')
+legend(x=111.8,y=34.1,legend=c("Aquaculture",inNames),col=c(NA,aquacols),pch=15,box.col='lightgrey',bg='lightgrey')
+
 
 midLeg<-123
 latLeg<-15
@@ -154,12 +158,12 @@ Offset<-c( 0,0,  #Fujian
 inOff<-matrix(Offset,ncol=2,byrow=T)
 
 text(x=LabelX+inOff[,1],y=LabelY+inOff[,2],Label,cex=1)
-text(x=112.6,y=16,"Marine seafood production (t)")
+text(x=112.6,y=15.7,"Marine seafood production (t)")
 color.legend2(106,13,119.4,14.5,rect.col=cols,
               #legend=round(exp(colrange[seq(1,length(colrange),length.out=6)])))
               legend=c(1,25,500,15000,350000,6500000),cex=.2)
 
-
+par(xpd=NA)
 #==plot fisheries here
 for(y in 1:length(CoastalID))
 {
@@ -175,7 +179,7 @@ for(y in 1:length(CoastalID))
                try(useCol[i] <- cols[which(abs(colrange-log(temp[i])) == min(abs(colrange-log(temp[i]))))] ,silent=T)
      }
      plot(temp~as.numeric(names(temp)),type='l',bty='n',xaxt='n',yaxt='n',
-          ylim=c(-10000,1.1*max(temp,na.rm=T)),lwd=1,col=useCol)
+          ylim=c(-10000,1.1*max(temp,na.rm=T)),lwd=1,col=useCol,xlab='',ylab='')
      points(temp~as.numeric(names(temp)),pch=16,cex=1.5,col=useCol)
      
      #cbind(FlatAquaFish$'all fish'[temp],FlatAquaFish$Year[temp],useCol)
