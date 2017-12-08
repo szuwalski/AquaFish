@@ -24,14 +24,16 @@ cuttlefish_catch,Cuttlefish
 jellyfish_catch,Jellyfish
 other_crustaceans_catch,Other crustaceans
 other_fish_catch,Other fish
-laminaria_aqua,Laminaria (algae)
+laminaria_aqua,Laminaria (kelp)
 laver_aqua,Laver (algae)
 chinese_white_shrimp_aqua,Chinese white shrimp
 ark_clam_aqua,Ark clam
 mussels_aqua,Mussels
 common_orient_clam_aqua,Common orient clam
+atrina_aqua,Atrina
 scallop_aqua,Scallop
 razor_clam_aqua,Razor clam
 other_algae_aqua,Other algae
 other_crustacean_aqua,Other crustaceans
 other_shellfish_aqua,Other shellfish
+other_fish_aqua,Other fish

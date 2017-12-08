@@ -39,7 +39,7 @@ for(x in 1:length(CoastalID))
 }
 
 #==make colors
-colrange  <-seq(0,max(log(as.numeric(TotalProdProvince2016[1:10])),na.rm=T),
+colrange  <-seq(log(197),max(log(as.numeric(TotalProdProvince2016[1:10])),na.rm=T),
               length.out=1000)
 cols 	<-colorRampPalette(brewer.pal(11,"Spectral"))(length(colrange))
 
@@ -52,11 +52,15 @@ for(i in 1:length(CoastalID))
                                                  min(abs(colrange-log(as.numeric(TotalProdProvince2016[PassInd])))))] )
 }
 
+for(x in 1:length(CoastalProv))
+    aqua_area_by_province$Province[aqua_area_by_province$Province==CoastalProv[x]]<-CoastalProv_name[x]
+for(x in 1:length(CoastalProv))
+   fish_effort_by_province$Province[fish_effort_by_province$Province==CoastalProv[x]]<-CoastalProv_name[x]
 
 
 #dev.new(width=8,height=5)
 #pdf("Plots/ChinaSeafoodProduction.pdf",height=5,width=8)
-pdf("Plots/ChinaSeafoodProduction.pdf",height=6,width=8)
+png("Plots/ChinaSeafoodProduction.png",height=6,width=8,res=1200,units='in')
 layout(matrix(c(1,2,2,3),ncol=4))
 xIn<-c(seq(1,length(CoastalID)),rep(rep(length(CoastalID)+1,length(CoastalID)),2),seq(length(CoastalID)+2,length(CoastalID)+1+length(CoastalID)))
 layout(matrix(xIn,ncol=4))
@@ -65,7 +69,7 @@ par(mar=c(.3,.3,.3,.3),oma=c(2,1,3,1),xpd=TRUE,bg=NA)
 OrderedID<-c(7,5,9,8,6,10,1,2,4,3)
 
 Years<-seq(1986,2016)
-
+minval<-100000
 #==plot aquaculture here
 for(y in 1:length(CoastalID))
 {
@@ -78,6 +82,7 @@ for(y in 1:length(CoastalID))
      #  why do you do this to me R??? I thought we were friends.
      useCol<-rep(1,length(temp))
      makePretty<-1
+     temp[temp==0]<-NA
      if(makePretty>0)
      {
           for(i in 1:length(useCol))
@@ -86,12 +91,18 @@ for(y in 1:length(CoastalID))
      plot(temp~as.numeric(names(temp)),type='l',bty='n',xaxt='n',yaxt='n',
           ylim=c(-1,1.1*max(temp,na.rm=T)),lwd=1,col=useCol)
      points(temp~as.numeric(names(temp)),pch=16,cex=1.5,col=useCol)
-     
+     if(min(temp,na.rm=T)<minval)
+      minval<-min(temp,na.rm=T)
      #cbind(FlatAquaFish$'all fish'[temp],FlatAquaFish$Year[temp],useCol)
      
      legend("topleft",Label[OrderedID[y]],bty='n')
      if(y==length(CoastalID))
           axis(side=1,line=.25)
+     
+     
+     temp2<-aqua_area_by_province[aqua_area_by_province$Province==as.character(Label[OrderedID[y]]),]
+     par(new=TRUE)
+     plot(temp2$'total area'~temp2$Year,type='l',xaxt='n',yaxt='n',bty='n',ylab='',xlab='',lty=2)
 }
 
 #plot(china_map1, col=inCols,xlim=c(115,117),ylim=c(16,42))
@@ -99,7 +110,8 @@ plot(china_map1, col=inCols,xlim=c(108,123),ylim=c(14,42))
 
 #==pie charts for aquaculture
 # province,algae,other,total,fish,crustacean,shrimp,crab,shellfish
-all_area_ind<-c(1,2,11,19,20,21,22,27,31)
+all_area_ind<-c(1,2,11,16,20,21,22,23,28,33)
+names(aqua_area_by_province)
 plot_aqua<-aqua_area_by_province[aqua_area_by_province$Year==2016,all_area_ind]
 plot_aqua<-plot_aqua[-4,] # get rid of shanghai
 in_radius<-sqrt(plot_aqua$`total area`/3.141596)
@@ -128,7 +140,7 @@ for(z in 1:nrow(inOff))
 {     
      temp<-plot_aqua[which(plot_aqua$Province==as.character(Label[z])),]
      floating.pie(xpos=LabelX[z]+inOff[z,1],ypos=LabelY[z]+inOff[z,2],
-                  radius=in_radius[which(plot_aqua$Province==as.character(Label[z]))],x=as.numeric(temp[c(2,3,5:ncol(temp))]),col=aquacols)
+                  radius=in_radius[which(plot_aqua$Province==as.character(Label[z]))],x=as.numeric(temp[c(2,3,6:ncol(temp))]),col=aquacols)
 }
 
 inNames<-c("Algae","Other","Fish","Crustaceans","Shrimp","Crab","Shellfish")
@@ -161,7 +173,7 @@ text(x=LabelX+inOff[,1],y=LabelY+inOff[,2],Label,cex=1)
 text(x=112.6,y=15.7,"Marine seafood production (t)")
 color.legend2(106,13,119.4,14.5,rect.col=cols,
               #legend=round(exp(colrange[seq(1,length(colrange),length.out=6)])))
-              legend=c(1,25,500,15000,350000,6500000),cex=.2)
+              legend=c(200,1500,12500,100000,850000,6500000),cex=.2)
 
 par(xpd=NA)
 #==plot fisheries here
@@ -173,6 +185,7 @@ for(y in 1:length(CoastalID))
      #  why do you do this to me R??? I thought we were friends.
      useCol<-rep(1,length(temp))
      makePretty<-1
+     temp[temp==0]<-NA
      if(makePretty>0)
      {
           for(i in 1:length(useCol))
@@ -187,6 +200,12 @@ for(y in 1:length(CoastalID))
      #legend("topleft",Label[OrderedID[y]],bty='n')
      if(y==length(CoastalID))
           axis(side=1,line=.25)
+     if(min(temp,na.rm=T)<minval)
+          minval<-min(temp,na.rm=T)
+     
+     temp2<-fish_effort_by_province[fish_effort_by_province$Province==as.character(Label[OrderedID[y]]),]
+     par(new=TRUE)
+     plot(temp2$Kilowatts~temp2$Year,type='l',xaxt='n',yaxt='n',bty='n',ylab='',xlab='',lty=2)
 }
 
 mtext(outer=T,adj=.1,"Culture",side=3)
